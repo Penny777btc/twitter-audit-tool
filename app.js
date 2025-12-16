@@ -1048,7 +1048,8 @@ async function fetchTwitterUserData(row) {
     }
 
     const cleanedHandle = row.handle.replace(/^@/, '');
-    const apiUrl = `http://localhost:3000/api/user/${encodeURIComponent(cleanedHandle)}`;
+    // Use relative path for both local and Vercel deployment
+    const apiUrl = `/api/user/${encodeURIComponent(cleanedHandle)}`;
 
     console.log(`Fetching @${cleanedHandle}...`);
 

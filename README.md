@@ -1,11 +1,9 @@
 # 🐦 Twitter Audit Tool
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Made with Node.js](https://img.shields.io/badge/Node.js->=14.0-green.svg)](https://nodejs.org/)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/peny-eth/twitter-audit-tool)
 
 一个开源的 Twitter 用户审核工具，支持批量检查用户粉丝数量和自定义关键词检测。
-
-![Screenshot](screenshot.png)
 
 ## ✨ 功能特点
 
@@ -15,40 +13,35 @@
 - 🏷️ **关键词检测** - 自定义关键词检测用户简介和推文
 - 📥 **导出结果** - 将审核结果导出为 Excel 文件
 - 🔒 **隐私安全** - API Key 仅存储在本地浏览器中
-- 🌐 **开源免费** - 完全开源，可本地运行
+- 🌐 **开源免费** - 完全开源，可本地运行或部署到 Vercel
+
+## 🚀 在线 Demo
+
+👉 **[Live Demo](https://twitter-audit-tool.vercel.app)** (需要配置您自己的 Twitter API Key)
 
 ## 🚀 快速开始
 
-### 1. 克隆项目
+### 方式一：部署到 Vercel（推荐）
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/peny-eth/twitter-audit-tool)
+
+1. 点击上方按钮一键部署
+2. 在 Vercel 项目设置中添加环境变量（可选）：
+   - `TWITTER_BEARER_TOKEN`: 您的 Twitter API Bearer Token
+3. 访问部署后的 URL，在设置中配置 API Key
+
+### 方式二：本地运行
 
 ```bash
-git clone https://github.com/yourusername/twitter-audit-tool.git
+# 克隆项目
+git clone https://github.com/peny-eth/twitter-audit-tool.git
 cd twitter-audit-tool
-```
 
-### 2. 启动服务器
-
-```bash
+# 启动服务器
 node server.js
+
+# 访问 http://localhost:3000
 ```
-
-### 3. 访问工具
-
-打开浏览器访问：**http://localhost:3000**
-
-### 4. 配置设置
-
-1. 点击右上角 ⚙️ **设置** 按钮
-2. 输入您的 **Twitter API Bearer Token**
-3. （可选）自定义检测关键词
-4. 保存设置
-
-### 5. 开始使用
-
-1. 上传包含 Twitter Handle 的表格文件
-2. 点击 **开始审核** 按钮
-3. 等待审核完成
-4. 查看结果并导出
 
 ## 🔑 获取 Twitter API Key
 
@@ -94,42 +87,34 @@ twitter-audit-tool/
 ├── index.html          # 主页面
 ├── styles.css          # 样式文件
 ├── app.js              # 前端逻辑
-├── server.js           # 后端服务器（API 代理）
+├── server.js           # 本地开发服务器
+├── api/                # Vercel Serverless Functions
+│   └── user/
+│       └── [username].js
+├── vercel.json         # Vercel 配置
 ├── .env.example        # 环境变量示例
-├── .gitignore          # Git 忽略文件
 └── README.md           # 说明文档
 ```
 
 ## 🛠️ 技术栈
 
 - **前端**：原生 HTML/CSS/JavaScript
-- **后端**：Node.js (无依赖)
+- **后端**：Node.js / Vercel Serverless Functions
 - **Excel 处理**：SheetJS (xlsx)
 
-## 🔧 高级配置
-
-### 使用环境变量
-
-如果您想预配置 API Key（例如部署到服务器），可以使用环境变量：
+## 🔧 本地开发
 
 ```bash
-# 复制示例文件
-cp .env.example .env
+# 克隆项目
+git clone https://github.com/peny-eth/twitter-audit-tool.git
+cd twitter-audit-tool
 
-# 编辑 .env 添加您的 API Key
-TWITTER_BEARER_TOKEN=your_bearer_token_here
+# 使用 Vercel CLI 本地开发
+npm i -g vercel
+vercel dev
 
-# 安装 dotenv（可选）
-npm install dotenv
-
-# 启动服务器
+# 或者使用 Node.js 服务器
 node server.js
-```
-
-### 修改默认端口
-
-```bash
-PORT=8080 node server.js
 ```
 
 ## 🤝 贡献指南
@@ -160,4 +145,4 @@ PORT=8080 node server.js
 
 ---
 
-Made with ❤️ by the community
+Made with ❤️ by [@Penny777](https://x.com/Penny777_eth)
