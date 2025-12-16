@@ -1,7 +1,7 @@
 # 🐦 Twitter Audit Tool
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/peny-eth/twitter-audit-tool)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Penny777btc/twitter-audit-tool)
 
 一个开源的 Twitter 用户审核工具，支持批量检查用户粉丝数量和自定义关键词检测。
 
@@ -23,7 +23,7 @@
 
 ### 方式一：部署到 Vercel（推荐）
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/peny-eth/twitter-audit-tool)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Penny777btc/twitter-audit-tool)
 
 1. 点击上方按钮一键部署
 2. 在 Vercel 项目设置中添加环境变量（可选）：
@@ -34,7 +34,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/peny-eth/twitter-audit-tool.git
+git clone https://github.com/Penny777btc/twitter-audit-tool.git
 cd twitter-audit-tool
 
 # 启动服务器
@@ -106,7 +106,7 @@ twitter-audit-tool/
 
 ```bash
 # 克隆项目
-git clone https://github.com/peny-eth/twitter-audit-tool.git
+git clone https://github.com/Penny777btc/twitter-audit-tool.git
 cd twitter-audit-tool
 
 # 使用 Vercel CLI 本地开发
