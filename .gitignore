@@ -1,0 +1,19 @@
+# Environment variables (contains API keys)
+.env
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Excel files (user data)
+*.xlsx
+
+# Logs
+*.log
