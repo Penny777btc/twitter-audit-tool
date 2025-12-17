@@ -122,62 +122,8 @@ function updateRateLimitUI() {
 // ========================================
 
 let tableData = [];
-// ... (rest of the file until line 929)
 
-function openAuditModal() {
-    // Check API Key first
-    if (!getApiKey()) {
-        alert('请先在设置中配置 Twitter API Key');
-        openSettingsModal();
-        return;
-    }
 
-    const modal = document.getElementById('auditModal');
-    const pendingCount = tableData.filter(row => row.status === 'pending').length;
-
-    document.getElementById('totalRecordsCount').textContent = pendingCount;
-    document.getElementById('auditCountInput').value = Math.min(5, pendingCount);
-    document.getElementById('auditStartInput').value = 1;
-
-    updateEstimatedTime();
-    document.getElementById('auditCountInput').addEventListener('input', updateEstimatedTime);
-
-    // Update Rate Limit Display
-    updateRateLimitUI();
-
-    modal.style.display = 'flex';
-}
-// ... (skip to fetchTwitterUserData modifications)
-
-// In fetchTwitterUserData function:
-if (!result.success) {
-    // User might not exist
-    if (result.error && result.error.includes('not found')) {
-        throw new Error('用户不存在');
-    }
-    throw new Error(result.error || '未知错误');
-}
-
-// Save Rate Limit Info
-if (result.rate_limit) {
-    saveRateLimitInfo(result.rate_limit);
-}
-
-const user = result.user;
-row.followers = user.followers_count || 0;
-row.description = user.description || '';
-row.tweets = result.tweets || [];
-
-// Check for keywords
-const keywords = getKeywords();
-const allText = [row.description, ...row.tweets].join(' ');
-row.aiKeywords = keywords.filter(keyword =>
-    allText.toLowerCase().includes(keyword.toLowerCase())
-);
-row.aiDetected = row.aiKeywords.length > 0;
-
-console.log(`@${cleanedHandle}: ${row.followers} followers, keywords: ${row.aiKeywords.length}`);
-return; // Success!
 let lastCheckedIndex = null;
 
 // ========================================
