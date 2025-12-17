@@ -208,7 +208,14 @@ const server = http.createServer(async (req, res) => {
                     }
                 }
 
-                // Return combined result
+                // return combined result
+                // Extract rate limit headers from the upstream response
+                const rateLimit = {
+                    limit: userResult.headers['x-rate-limit-limit'],
+                    remaining: userResult.headers['x-rate-limit-remaining'],
+                    reset: userResult.headers['x-rate-limit-reset']
+                };
+
                 res.writeHead(200);
                 res.end(JSON.stringify({
                     success: true,
@@ -222,7 +229,8 @@ const server = http.createServer(async (req, res) => {
                         tweet_count: user.public_metrics?.tweet_count || 0,
                         profile_image_url: user.profile_image_url || ''
                     },
-                    tweets: tweets
+                    tweets: tweets,
+                    rate_limit: rateLimit
                 }));
                 return;
             }

@@ -102,6 +102,13 @@ export default async function handler(req, res) {
             console.log(`[API] Error fetching tweets: ${tweetError.message}`);
         }
 
+        // Extract rate limit info from user response (primary cost)
+        const rateLimit = {
+            limit: userResponse.headers.get('x-rate-limit-limit'),
+            remaining: userResponse.headers.get('x-rate-limit-remaining'),
+            reset: userResponse.headers.get('x-rate-limit-reset')
+        };
+
         return res.status(200).json({
             success: true,
             user: {
@@ -114,7 +121,8 @@ export default async function handler(req, res) {
                 following_count: user.public_metrics?.following_count || 0,
                 tweet_count: user.public_metrics?.tweet_count || 0
             },
-            tweets: tweets
+            tweets: tweets,
+            rate_limit: rateLimit
         });
 
     } catch (error) {

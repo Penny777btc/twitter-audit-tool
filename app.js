@@ -11,7 +11,8 @@
 const STORAGE_KEYS = {
     API_KEY: 'twitter_audit_api_key',
     KEYWORDS: 'twitter_audit_keywords',
-    REQUEST_DELAY: 'twitter_audit_request_delay'
+    REQUEST_DELAY: 'twitter_audit_request_delay',
+    RATE_LIMIT: 'twitter_audit_rate_limit'
 };
 
 const DEFAULT_KEYWORDS = [
@@ -60,11 +61,123 @@ function setRequestDelay(delay) {
     localStorage.setItem(STORAGE_KEYS.REQUEST_DELAY, delay.toString());
 }
 
+function getRateLimitInfo() {
+    const stored = localStorage.getItem(STORAGE_KEYS.RATE_LIMIT);
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
+function saveRateLimitInfo(info) {
+    if (!info) return;
+    localStorage.setItem(STORAGE_KEYS.RATE_LIMIT, JSON.stringify({
+        ...info,
+        updatedAt: Date.now()
+    }));
+    updateRateLimitUI();
+}
+
+function updateRateLimitUI() {
+    const info = getRateLimitInfo();
+    const container = document.getElementById('apiRateLimitStats');
+
+    if (!info || !container) return;
+
+    container.style.display = 'block';
+
+    const limitEl = document.getElementById('rateLimitLimit');
+    const remainingEl = document.getElementById('rateLimitRemaining');
+    const resetEl = document.getElementById('rateLimitReset');
+
+    if (limitEl) limitEl.textContent = info.limit || 15;
+    if (remainingEl) {
+        remainingEl.textContent = info.remaining !== undefined ? info.remaining : '—';
+        // Color code
+        if (info.remaining < 2) remainingEl.style.color = '#ef4444'; // Red
+        else if (info.remaining < 5) remainingEl.style.color = '#f97316'; // Orange
+        else remainingEl.style.color = '#22c55e'; // Green
+    }
+
+    if (resetEl && info.reset) {
+        const resetTime = parseInt(info.reset) * 1000; // epoch seconds to ms
+        const now = Date.now();
+        const diff = resetTime - now;
+
+        if (diff > 0) {
+            const mins = Math.ceil(diff / 60000);
+            resetEl.textContent = `${mins} 分钟后`;
+        } else {
+            resetEl.textContent = '已重置';
+        }
+    }
+}
+
 // ========================================
 // Global State
 // ========================================
 
 let tableData = [];
+// ... (rest of the file until line 929)
+
+function openAuditModal() {
+    // Check API Key first
+    if (!getApiKey()) {
+        alert('请先在设置中配置 Twitter API Key');
+        openSettingsModal();
+        return;
+    }
+
+    const modal = document.getElementById('auditModal');
+    const pendingCount = tableData.filter(row => row.status === 'pending').length;
+
+    document.getElementById('totalRecordsCount').textContent = pendingCount;
+    document.getElementById('auditCountInput').value = Math.min(5, pendingCount);
+    document.getElementById('auditStartInput').value = 1;
+
+    updateEstimatedTime();
+    document.getElementById('auditCountInput').addEventListener('input', updateEstimatedTime);
+
+    // Update Rate Limit Display
+    updateRateLimitUI();
+
+    modal.style.display = 'flex';
+}
+// ... (skip to fetchTwitterUserData modifications)
+
+// In fetchTwitterUserData function:
+if (!result.success) {
+    // User might not exist
+    if (result.error && result.error.includes('not found')) {
+        throw new Error('用户不存在');
+    }
+    throw new Error(result.error || '未知错误');
+}
+
+// Save Rate Limit Info
+if (result.rate_limit) {
+    saveRateLimitInfo(result.rate_limit);
+}
+
+const user = result.user;
+row.followers = user.followers_count || 0;
+row.description = user.description || '';
+row.tweets = result.tweets || [];
+
+// Check for keywords
+const keywords = getKeywords();
+const allText = [row.description, ...row.tweets].join(' ');
+row.aiKeywords = keywords.filter(keyword =>
+    allText.toLowerCase().includes(keyword.toLowerCase())
+);
+row.aiDetected = row.aiKeywords.length > 0;
+
+console.log(`@${cleanedHandle}: ${row.followers} followers, keywords: ${row.aiKeywords.length}`);
+return; // Success!
 let lastCheckedIndex = null;
 
 // ========================================
@@ -908,6 +1021,7 @@ function updateApiKeyStatus() {
 // Audit Modal & Settings
 // ========================================
 
+// Update openAuditModal to show rate limit info
 function openAuditModal() {
     // Check API Key first
     if (!getApiKey()) {
@@ -926,198 +1040,50 @@ function openAuditModal() {
     updateEstimatedTime();
     document.getElementById('auditCountInput').addEventListener('input', updateEstimatedTime);
 
+    // Update Rate Limit Display
+    updateRateLimitUI();
+
     modal.style.display = 'flex';
 }
 
-function closeAuditModal() {
-    document.getElementById('auditModal').style.display = 'none';
+// ... existing code ...
+
+if (!result.success) {
+    // User might not exist
+    if (result.error && result.error.includes('not found')) {
+        throw new Error('用户不存在');
+    }
+    throw new Error(result.error || '未知错误');
 }
 
-function handleAuditModalClick(event) {
-    if (event.target.classList.contains('modal') || event.target.classList.contains('modal-overlay')) {
-        closeAuditModal();
-    }
+// Save Rate Limit Info
+if (result.rate_limit) {
+    saveRateLimitInfo(result.rate_limit);
 }
 
-function updateEstimatedTime() {
-    const count = parseInt(document.getElementById('auditCountInput').value) || 0;
-    const delayPerUser = getRequestDelay() / 1000;
-    const totalSeconds = count * delayPerUser;
+const user = result.user;
+row.followers = user.followers_count || 0;
+row.description = user.description || '';
+row.tweets = result.tweets || [];
 
-    let timeStr;
-    if (totalSeconds < 60) {
-        timeStr = `${Math.round(totalSeconds)} 秒`;
-    } else if (totalSeconds < 3600) {
-        const mins = Math.ceil(totalSeconds / 60);
-        timeStr = `约 ${mins} 分钟`;
-    } else {
-        const hours = Math.floor(totalSeconds / 3600);
-        const mins = Math.ceil((totalSeconds % 3600) / 60);
-        timeStr = `约 ${hours} 小时 ${mins} 分钟`;
-    }
+// Check for keywords
+const keywords = getKeywords();
+const allText = [row.description, ...row.tweets].join(' ');
+row.aiKeywords = keywords.filter(keyword =>
+    allText.toLowerCase().includes(keyword.toLowerCase())
+);
+row.aiDetected = row.aiKeywords.length > 0;
 
-    document.getElementById('estimatedTime').textContent = timeStr;
-
-    // Also update the count display
-    const countDisplay = document.getElementById('auditCountDisplay');
-    if (countDisplay) {
-        countDisplay.textContent = count;
-    }
-}
-
-function startAuditWithCount() {
-    const count = parseInt(document.getElementById('auditCountInput').value) || 5;
-    const startIndex = (parseInt(document.getElementById('auditStartInput').value) || 1) - 1;
-
-    if (count < 1 || count > 100) {
-        showToast('审核数量必须在 1-100 之间', 'error');
-        return;
-    }
-
-    if (startIndex < 0 || startIndex >= tableData.length) {
-        showToast('起始位置无效', 'error');
-        return;
-    }
-
-    closeAuditModal();
-    startAudit(startIndex, count);
-}
-
-// ========================================
-// Twitter API Integration
-// ========================================
-
-async function startAudit(startIndex = 0, maxCount = null) {
-    const progressContainer = document.getElementById('progressContainer');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-    const progressPercent = document.getElementById('progressPercent');
-
-    progressContainer.style.display = 'block';
-
-    let completed = 0;
-    const endIndex = maxCount !== null
-        ? Math.min(startIndex + maxCount, tableData.length)
-        : tableData.length;
-    const total = endIndex - startIndex;
-
-    for (let i = startIndex; i < endIndex; i++) {
-        const row = tableData[i];
-
-        row.status = 'loading';
-        renderTable();
-
-        progressText.textContent = `正在审核 @${row.handle}... (${completed + 1}/${total})`;
-
-        try {
-            await fetchTwitterUserData(row);
-            row.status = 'success';
-        } catch (error) {
-            console.error(`Error auditing ${row.handle}:`, error);
-            row.status = 'error';
-            row.error = error.message;
-        }
-
-        completed++;
-        const percent = Math.round((completed / total) * 100);
-        progressFill.style.width = `${percent}%`;
-        progressPercent.textContent = `${percent}%`;
-
-        renderTable();
-
-        if (i < endIndex - 1) {
-            await sleep(getRequestDelay());
-        }
-    }
-
-    progressText.textContent = `审核完成！已审核 ${completed} 条记录`;
-
-    setTimeout(() => {
-        progressContainer.style.display = 'none';
-    }, 3000);
-}
-
-async function fetchTwitterUserData(row) {
-    if (!row.handle) {
-        throw new Error('无效的 Handle');
-    }
-
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        throw new Error('请先配置 API Key');
-    }
-
-    const cleanedHandle = row.handle.replace(/^@/, '');
-    // Use relative path for both local and Vercel deployment
-    const apiUrl = `/api/user/${encodeURIComponent(cleanedHandle)}`;
-
-    console.log(`Fetching @${cleanedHandle}...`);
-
-    // Retry logic for rate limiting
-    let retries = 0;
-    const maxRetries = 2;
-
-    while (retries <= maxRetries) {
-        try {
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'X-Twitter-Bearer-Token': apiKey
-                }
-            });
-            const result = await response.json();
-
-            if (response.status === 429) {
-                // Rate limited - wait and retry
-                retries++;
-                if (retries <= maxRetries) {
-                    console.log(`Rate limited, waiting 60s before retry ${retries}/${maxRetries}...`);
-                    showToast(`速率限制，等待 60 秒后重试...`, 'warning');
-                    await sleep(60000); // Wait 60 seconds
-                    continue;
-                } else {
-                    throw new Error('API 速率限制，请稍后再试');
-                }
-            }
-
-            if (!response.ok) {
-                // Check for specific error types
-                if (response.status === 401) {
-                    throw new Error('API Key 无效或已过期');
-                }
-                throw new Error(result.error || result.message || `HTTP ${response.status}`);
-            }
-
-            if (!result.success) {
-                // User might not exist
-                if (result.error && result.error.includes('not found')) {
-                    throw new Error('用户不存在');
-                }
-                throw new Error(result.error || '未知错误');
-            }
-
-            const user = result.user;
-            row.followers = user.followers_count || 0;
-            row.description = user.description || '';
-            row.tweets = result.tweets || [];
-
-            // Check for keywords
-            const keywords = getKeywords();
-            const allText = [row.description, ...row.tweets].join(' ');
-            row.aiKeywords = keywords.filter(keyword =>
-                allText.toLowerCase().includes(keyword.toLowerCase())
-            );
-            row.aiDetected = row.aiKeywords.length > 0;
-
-            console.log(`@${cleanedHandle}: ${row.followers} followers, keywords: ${row.aiKeywords.length}`);
-            return; // Success!
+console.log(`@${cleanedHandle}: ${row.followers} followers, keywords: ${row.aiKeywords.length}`);
+return; // Success!
 
         } catch (error) {
-            if (retries < maxRetries && error.message.includes('速率限制')) {
-                retries++;
-                continue;
-            }
-            throw error;
-        }
+    if (retries < maxRetries && error.message.includes('速率限制')) {
+        retries++;
+        continue;
+    }
+    throw error;
+}
     }
 }
 
